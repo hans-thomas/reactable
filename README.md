@@ -16,9 +16,8 @@ in front-end we used Vue js with axios for sending request and getting server re
 - third ```npm i```
 - then ```cp .env.example .env```
 - next ```php artisan key:generate```
-- and also ```php artisan migrate``` 
-- in the end run ```php artisan websockets:serve```
-- and finally ```php artisan serve``` for serving the project
+- and also ```php artisan websockets:serve```
+- in the end  ```php artisan serve``` for serving the project
 
 ## How to use
 - in ```HomeController.php``` we have `run` method, anytime UPDATE button clicked in Home page this method execute.
