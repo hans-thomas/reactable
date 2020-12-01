@@ -10,6 +10,7 @@
     use Rx\Observable\ConnectableObservable;
     use Rx\ObserverInterface;
     use Rx\Scheduler;
+    use Rx\Subject\Subject;
 
     class HomeController extends Controller {
 
@@ -21,12 +22,192 @@
             event( new OutputEvent( "[" . microtime( true ) . "] " . $message ) );
         }
 
+        private function init() {
+            $loop = Factory::create();
+            /*$loop->addTimer( 5, function() use ( $loop ) {
+                $this->push( 'async timer TICKED' );
+                $loop->stop();
+            } );*/
+            Scheduler::setDefaultFactory( function() use ( $loop ) {
+                return new Scheduler\EventLoopScheduler( $loop );
+            } );
+            register_shutdown_function( function() use ( $loop ) {
+                //$this->push( 'timer stopped by register_shutdown_function' );
+                $loop->stop();
+            } );
+
+            return $loop;
+        }
+
+        private function exe( \Closure $closure ) {
+            $loop = $this->init();
+            $closure();
+            $loop->run();
+        }
 
         public function run() {
-            Scheduler::setDefaultFactory( function() {
-                return Scheduler::getImmediate();
+            $this->exe( fn() => $this->publishValue());
+        }
+
+        private function publishValue() {
+            $observable = Observable::fromArray( range( 0, 1000 ) )->take( 10 )->do( function( $item ) {
+                $this->push( 'onNext => '. $item );
             } );
-            $this->isEmpty();
+
+            $published = $observable->publishValue( 'not yet.' );
+
+            $published->subscribe( function( $item ) {
+                $this->push( 'observer #1 => ' . $item );
+            } );
+            $published->subscribe( function( $item ) {
+                $this->push( 'observer #2 => ' . $item );
+            } );
+            $published->connect();
+        }
+
+        private function publishLast() {
+            $observable = Observable::range( 0, 20 )->take( 6 )->do( function( $item ) {
+                $this->push( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->publishLast();
+
+            $published->subscribe( function( $item ) {
+                $this->push( 'observer #1 => ' . $item );
+            } );
+            $published->subscribe( function( $item ) {
+                $this->push( 'observer #2 => ' . $item );
+            } );
+            $published->connect();
+        }
+
+        private function publish() {
+            $observable = Observable::range( 0, 11 )->take( 5 )->do( function( $item ) {
+                $this->push( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->publish();
+
+            $published->subscribe( function( $item ) {
+                $this->push( 'observer #1 => ' . $item );
+            } );
+            $published->subscribe( function( $item ) {
+                $this->push( 'observer #2 => ' . $item );
+            } );
+            $published->connect();
+        }
+
+        private function fromIterator() {
+            $generator = function() {
+                for ( $i = 0; $i <= 10; $i ++ ) {
+                    yield $i;
+                }
+            };
+
+            Observable::fromIterator( $generator() )->subscribe( function( $item ) {
+                $this->push( 'observer => ' . $item );
+            } );
+        }
+
+        private function fromPromise() {
+            $promise = \React\Promise\resolve( 'promise' );
+
+            Observable::fromPromise( $promise )->subscribe( function( $item ) {
+                $this->push( 'observer => ' . $item );
+            } );
+        }
+
+        private function toPromise() {
+            $promise = Observable::of( 'observable' )->toPromise();
+
+            $promise->then( function( $item ) {
+                $this->push( 'promise => ' . $item );
+            } );
+        }
+
+        private function pluck() {
+            Observable::fromArray( [
+                [ 'id' => 1, 'name' => 'Hans', 'zip' => 65825 ],
+                [ 'id' => 2, 'name' => 'ashley', 'zip' => 78945 ],
+                [ 'id' => 3, 'name' => 'alicia', 'zip' => 12458 ],
+            ] )->pluck( 'name' )->subscribe( function( $item ) {
+                $this->push( 'observer => ' . $item );
+            } );
+        }
+
+        private function partition() {
+            list( $evens, $odds ) = Observable::range( 0, 6 )->partition( function( $item ) {
+                return $item % 2 === 0;
+            } );
+            $evens->subscribe( function( $item ) {
+                $this->push( 'event value => ' . $item );
+            } );
+            $odds->subscribe( function( $item ) {
+                $this->push( 'odd value => ' . $item );
+            } );
+        }
+
+        private function multicast() {
+            $subject = new Subject();
+            $source  = Observable::range( 0, 6 )->multicast( $subject ); // a short hand for ConneactableObservable
+
+            $subject->subscribe( function( $item ) {
+                $this->push( 'observer #2 => ' . $item );
+            } );
+            $subject->subscribe( function( $item ) {
+                $this->push( 'observer #3 => ' . $item );
+            } );
+            $source->connect();
+        }
+
+        private function mergeAll() {
+            $source = Observable::range( 0, 6 )->map( function( $item ) {
+                return Observable::of( $item )->repeat( $item < 0 ? 1 : $item );
+            } );
+
+            $observable = $source->mergeAll();
+            $observable->subscribe( function( $item ) {
+                $this->push( 'observer => ' . $item );
+            } );
+        }
+
+        private function merge() {
+            $obseravble      = Observable::of( 1 )->repeat( 10 );
+            $otherObseravble = Observable::of( 2 )->repeat( 10 );
+
+            $mergedObservable = $obseravble->merge( $otherObseravble );
+
+            $mergedObservable->subscribe( function( $item ) {
+                $this->push( 'observer => ' . $item );
+            } );
+        }
+
+        private function min() {
+            // we can define a comparer same as maxWithComparer
+            $observable = Observable::fromArray( [ 0, 1, 2, 3, 4 ] )->min();
+
+            $observable->subscribe( function( $item ) {
+                $this->push( 'obserer => ' . $item );
+            } );
+        }
+
+        private function maxWithComparer() {
+            $comparer   = function( $x, $y ) {
+                return $x > $y ? 1 : ( $x < $y ? - 1 : 0 );
+            };
+            $observable = Observable::fromArray( [ 0, 1, 2, 3, 4 ] )->max( $comparer );
+
+            $observable->subscribe( function( $item ) {
+                $this->push( 'obserer => ' . $item );
+            } );
+        }
+
+        private function max() {
+            $observable = Observable::fromArray( [ 0, 1, 2, 3, 4 ] )->max();
+
+            $observable->subscribe( function( $item ) {
+                $this->push( 'obserer => ' . $item );
+            } );
         }
 
         private function isEmpty() {
