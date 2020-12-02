@@ -10,6 +10,6 @@
     class CommandsController extends Controller {
 
         public static function exe() {
-            Operators::combineLatest();
+            Operators::skipWhileWithIndex();
         }
     }

@@ -7,6 +7,9 @@
     use App\Http\Controllers\Controller;
     use Illuminate\Http\Request;
     use React\EventLoop\Factory;
+    use Reactable\Examples\Loops;
+    use Reactable\Examples\Observables;
+    use Reactable\Examples\Operators;
     use Rx\Scheduler;
 
     class ApiController extends Controller {

@@ -4,8 +4,13 @@
             <div class="col-md-8">
                 <div v-if="hasError">
                     <div class="alert alert-dismissible alert-danger">
-                        <strong>Error! </strong><span>{{ error.message }}</span> <br>
-                        <span>occurred in {{ error.file }} file on line {{ error.line }}</span>
+                        <p>
+                            <strong>Error! </strong><span v-text="error.message"></span>
+                        </p>
+                        <p>
+                            occurred in <span v-text="error.file "></span> file on line <span
+                            v-text="error.line"></span>
+                        </p>
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -43,24 +48,27 @@
         data: () => {
             return {
                 stack: [],
-                error : [],
-                hasError : false
+                error: {
+                    message: null,
+                    line: null,
+                    file: null
+                },
+                hasError: false
             }
         },
         methods: {
-            'run': function() {
+            'run': function () {
                 this.stack = [];
-                window.axios.post('/run', {}).then( () => {
-                    this.error = [];
+                window.axios.post('/run', {}).then(() => {
                     this.hasError = false;
-                }).catch((e)=> {
+                }).catch((e) => {
                     this.error['message'] = e.response.data.message;
                     this.error['line'] = e.response.data.line;
                     this.error['file'] = e.response.data.file;
                     this.hasError = true;
                 });
             },
-            'clear' : function () {
+            'clear': function () {
                 this.stack = [];
                 this.hasError = false;
             }

@@ -3,13 +3,15 @@
     namespace Reactable\Examples;
 
 
+    use Reactable\Utilities\Observer;
     use Reactable\Utilities\Output;
     use Rx\Observable;
+    use Rx\Observer\CallbackObserver;
 
     class Operators {
         public static function combineLatest() {
-            $obs1           = Observable::interval( 1000 );
-            $obs2           = Observable::interval( 3000 );
+            $obs1 = Observable::interval( 1000 );
+            $obs2 = Observable::interval( 3000 );
 
             $source = $obs1->combineLatest( [ $obs2 ], function( $item1, $item2 ) {
                 Output::send( "combineLatest => {$item1} - {$item2}" );
@@ -25,8 +27,8 @@
 
         public static function catch() {
 
-            Observable::fromArray( [ 0, 1, 2, 3, [ 4 ] ] )->map( function($item) {
-                return '(string) '.$item;
+            Observable::fromArray( [ 0, 1, 2, 3, [ 4 ] ] )->map( function( $item ) {
+                return '(string) ' . $item;
             } )->catch( function( \Exception $error ) {
                 Output::send( 'CATCH => ' . $error->getMessage() );
             } )->subscribe( function( $item ) {
@@ -336,5 +338,165 @@
             } );
         }
 
+        public static function race() {
+            $observable = Observable::race( [
+                Observable::timer( 200 )->map( function( $item ) {
+                    return 'observable #1 with 200ms delay => ' . $item;
+                } )->repeat( 10 ),
+                Observable::timer( 100 )->map( function( $item ) {
+                    return 'observable #2 with 100ms delay => ' . $item;
+                } )->repeat( 5 )
+            ] );
+            $observable->subscribe( Observer::get( 1 ) );
+            $observable->subscribe( Observer::get( 2 ) );
+        }
+
+        public static function reduce() {
+            $observable = Observable::fromArray( [ 1, 2, 3 ] );
+            $observable->reduce( function( $acc, $x ) {
+                Output::send( 'reduce => acc : ' . $acc . ' + x : ' . $x . ' = ' . ( $acc + $x ) );
+
+                return $acc + $x;
+            } )->subscribe( Observer::get() );
+        }
+
+        public static function reduceWithSeed() {
+            // act same as reduce but send 5 before array elements
+            $observable = Observable::fromArray( [ 1, 2, 3 ] );
+            $observable->reduce( function( $acc, $x ) {
+                Output::send( 'reduce => acc : ' . $acc . ' + x : ' . $x . ' = ' . ( $acc + $x ) );
+
+                return $acc + $x;
+            }, 5 )->subscribe( Observer::get() );
+        }
+
+        public static function reply() {
+            $observable = Observable::range( 300, 5 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->replay( function( Observable $x ) {
+                return $x->take( 2 )->repeat( 3 );
+            } );
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+        }
+
+        public static function retry() {
+            $counter    = 0;
+            $observable = Observable::interval( 300 )->flatMap( function( $item ) use ( &$counter ) {
+                $counter ++;
+                if ( $counter < 2 ) {
+                    return Observable::error( new \Exception( 'too many errors!' ) );
+                }
+
+                if ( $counter == 6 ) {
+                    return Observable::error( new \Exception( 'too many errors!' ) );
+                }
+
+                return Observable::of( $item );
+            } )->retry( 2 )->take( 10 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function retryWhen() {
+            $flag       = true;
+            $observable = Observable::interval( 1000 )->map( function( $item ) use ( &$flag ) {
+                if ( $item == 3 and $flag ) {
+                    $flag = false;
+                    throw new \Exception( 'item equal to 3' );
+                }
+
+                return $item;
+            } )->retryWhen( function( Observable $errored ) {
+                return $errored->delay( 2000 );
+            } )->take( 10 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function scan() {
+            $observable = Observable::range( 1, 5 )->scan( function( $acc, $x ) {
+                Output::send( 'reduce => acc : ' . $acc . ' + x : ' . $x . ' = ' . ( $acc + $x ) );
+
+                return $acc + $x;
+            } );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function share() {
+            $observable = Observable::interval( 1000 )->take( 5 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->share();
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+            $published->subscribe( Observer::get( 3 ) );
+        }
+
+        public static function shareReplay() {
+            $observable = Observable::interval( 1000 )->take( 7 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->shareReplay( 6 );
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+            $published->subscribe( Observer::get( 3 ) );
+        }
+
+        public static function shareValue() {
+            $observable = Observable::interval( 1000 )->take( 10 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->shareValue( 20 );
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+            $published->subscribe( Observer::get( 3 ) );
+        }
+
+        public static function skip() {
+            Observable::fromArray( [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] )->skip( 2 )->subscribe( Observer::get() );
+        }
+
+        public static function skipLast() {
+            Observable::fromArray( [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] )->skipLast( 2 )->subscribe( Observer::get() );
+        }
+
+        public static function skipUntil() {
+            $observable = Observable::interval( 1000 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } )->skipUntil( Observable::timer( 5000 ) )->take( 3 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function skipWhile() {
+            $observable = Observable::interval( 1000 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } )->skipWhile( function( $item ) {
+                return $item < 3;
+            } )->take( 6 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function skipWhileWithIndex() {
+            $observable = Observable::interval( 1000 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } )->skipWhileWithIndex( function( $index, $value ) {
+                return $index < 3;
+            } )->take( 6 );
+
+            $observable->subscribe( Observer::get() );
+        }
 
     }

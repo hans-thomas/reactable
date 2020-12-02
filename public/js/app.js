@@ -1943,6 +1943,11 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   mounted: function mounted() {
     var _this = this;
@@ -1954,7 +1959,11 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       stack: [],
-      error: [],
+      error: {
+        message: null,
+        line: null,
+        file: null
+      },
       hasError: false
     };
   },
@@ -1964,7 +1973,6 @@ __webpack_require__.r(__webpack_exports__);
 
       this.stack = [];
       window.axios.post('/run', {}).then(function () {
-        _this2.error = [];
         _this2.hasError = false;
       })["catch"](function (e) {
         _this2.error['message'] = e.response.data.message;
@@ -43683,18 +43691,22 @@ var render = function() {
                 "div",
                 { staticClass: "alert alert-dismissible alert-danger" },
                 [
-                  _c("strong", [_vm._v("Error! ")]),
-                  _c("span", [_vm._v(_vm._s(_vm.error.message))]),
+                  _c("p", [
+                    _c("strong", [_vm._v("Error! ")]),
+                    _c("span", {
+                      domProps: { textContent: _vm._s(_vm.error.message) }
+                    })
+                  ]),
                   _vm._v(" "),
-                  _c("br"),
-                  _vm._v(" "),
-                  _c("span", [
-                    _vm._v(
-                      "occurred in " +
-                        _vm._s(_vm.error.file) +
-                        " file on line " +
-                        _vm._s(_vm.error.line)
-                    )
+                  _c("p", [
+                    _vm._v("\n                        occurred in "),
+                    _c("span", {
+                      domProps: { textContent: _vm._s(_vm.error.file) }
+                    }),
+                    _vm._v(" file on line "),
+                    _c("span", {
+                      domProps: { textContent: _vm._s(_vm.error.line) }
+                    })
                   ]),
                   _vm._v(" "),
                   _vm._m(0)
@@ -56115,8 +56127,8 @@ __webpack_require__.r(__webpack_exports__);
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /opt/lampp/sites/test/Reactive/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /opt/lampp/sites/test/Reactive/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /opt/lampp/GitHub/Reactive/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /opt/lampp/GitHub/Reactive/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })
