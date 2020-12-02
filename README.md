@@ -9,6 +9,7 @@ in front-end we used Vue js with axios for sending request and getting server re
 - RxPHP commands with meaningful examples
 - simple and fast
 - SPA
+- Progressive
 
 ## How to run
 - first clone the repository and open a terminal in the root directory
@@ -20,7 +21,7 @@ in front-end we used Vue js with axios for sending request and getting server re
 - in the end  ```php artisan serve``` for serving the project
 
 ## How to use
-- in ```HomeController.php``` we have `run` method, anytime UPDATE button clicked in Home page this method execute.
-we also define commands in the separate private methods and to executing a command, just need called in `run` method.
-- for defining a new command, just need to create a  new private method and call it in `run` method.
-- to show up a message in the home page just need to call `push` method and write what you want.
+- in `CommandsController.php` we defined a method named `exe` that you can run your examples in this.
+- for showing up a message in result page, you can use `Output` class and `send` method.
+- examples defined in three types (Loops, Observables and Operators). you can call each method statically.
+- all the examples placed in `reactable/Examples` directory. feel free to insert a new method or manipulate methods.

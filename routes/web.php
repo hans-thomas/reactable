@@ -16,5 +16,5 @@
 
     Auth::routes();
 
-    Route::get( '/', [ App\Http\Controllers\HomeController::class, 'index' ] )->name( 'home' );
-    Route::post( '/run', [ App\Http\Controllers\HomeController::class, 'run' ] )->name( 'run' );
+    Route::get( '/', [ App\Http\Controllers\Core\HomeController::class, 'index' ] )->name( 'home' );
+    Route::post( '/run', [ App\Http\Controllers\Api\ApiController::class, 'run' ] )->name( 'run' );
