@@ -517,16 +517,4 @@
             // if doesnt receive a value in 500ms throw a timeout exception
             Observable::interval( rand( 10, 1500 ) )->timeout( 500 )->take( 10 )->subscribe( Observer::get() );
         }
-
-        public static function test() {
-            Output::send( 'test method executed' );
-        }
-
-        public static function foo() {
-            Output::send( 'foo method executed' );
-        }
-
-        public static function bar() {
-            Output::send( 'bar method executed' );
-        }
     }
