@@ -427,41 +427,6 @@
             $observable->subscribe( Observer::get() );
         }
 
-        public static function share() {
-            $observable = Observable::interval( 1000 )->take( 5 )->do( function( $item ) {
-                Output::send( 'onNext => ' . $item );
-            } );
-
-            $published = $observable->share();
-
-            $published->subscribe( Observer::get( 1 ) );
-            $published->subscribe( Observer::get( 2 ) );
-            $published->subscribe( Observer::get( 3 ) );
-        }
-
-        public static function shareReplay() {
-            $observable = Observable::interval( 1000 )->take( 7 )->do( function( $item ) {
-                Output::send( 'onNext => ' . $item );
-            } );
-
-            $published = $observable->shareReplay( 6 );
-
-            $published->subscribe( Observer::get( 1 ) );
-            $published->subscribe( Observer::get( 2 ) );
-            $published->subscribe( Observer::get( 3 ) );
-        }
-
-        public static function shareValue() {
-            $observable = Observable::interval( 1000 )->take( 10 )->do( function( $item ) {
-                Output::send( 'onNext => ' . $item );
-            } );
-
-            $published = $observable->shareValue( 20 );
-
-            $published->subscribe( Observer::get( 1 ) );
-            $published->subscribe( Observer::get( 2 ) );
-            $published->subscribe( Observer::get( 3 ) );
-        }
 
         public static function skip() {
             Observable::fromArray( [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] )->skip( 2 )->subscribe( Observer::get() );
@@ -499,4 +464,69 @@
             $observable->subscribe( Observer::get() );
         }
 
+        public static function startWith() {
+            Observable::of( 1 )->startWith( 2 )->subscribe( Observer::get() );
+        }
+
+        public static function startWithArray() {
+            Observable::of( 0 )->startWithArray( [ 1, 2, 3, 4, 5 ] )->subscribe( Observer::get() );
+        }
+
+        public static function sum() {
+            $observable = Observable::range( 1, 5 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item . ' +' );
+            } )->sum();
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function switch() {
+            $source     = Observable::interval( 100 )->take( 3 );
+            $observable = Observable::interval( 150 )->take( 4 )->concat( $source )->map( function( $item ) {
+                return Observable::range( 0, $item );
+            } )->switch();
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function switchFirst() {
+            $observable = Observable::fromArray( [
+                Observable::interval( 100 )->startWith( 'a' )->take( 5 ),
+                Observable::interval( 200 )->startWith( 'b' )->take( 5 ),
+                Observable::interval( 300 )->startWith( 'c' )->take( 5 ),
+            ] )->switchFirst();
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function throttle() {
+            $observable = Observable::fromArray( [
+                [ 'value' => 0, 'time' => 1000 ],
+                [ 'value' => 1, 'time' => 1000 ],
+                [ 'value' => 2, 'time' => 1000 ],
+                [ 'value' => 3, 'time' => 1000 ],
+                [ 'value' => 4, 'time' => 1000 ],
+            ] )->flatMap( function( $item ) {
+                return Observable::of( $item[ 'value' ] )->delay( $item[ 'time' ] );
+            } )->throttle( 200 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function timeout() {
+            // if doesnt receive a value in 500ms throw a timeout exception
+            Observable::interval( rand( 10, 1500 ) )->timeout( 500 )->take( 10 )->subscribe( Observer::get() );
+        }
+
+        public static function test() {
+            Output::send( 'test method executed' );
+        }
+
+        public static function foo() {
+            Output::send( 'foo method executed' );
+        }
+
+        public static function bar() {
+            Output::send( 'bar method executed' );
+        }
     }

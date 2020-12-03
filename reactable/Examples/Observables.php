@@ -3,10 +3,13 @@
     namespace Reactable\Examples;
 
 
+    use React\EventLoop\Factory;
+    use Reactable\Utilities\Observer;
     use Reactable\Utilities\Output;
     use Rx\Disposable\CallbackDisposable;
     use Rx\Observable;
     use Rx\ObserverInterface;
+    use Rx\Scheduler\EventLoopScheduler;
     use Rx\Subject\Subject;
 
     class Observables {
@@ -193,5 +196,116 @@
             $promise->then( function( $item ) {
                 Output::send( 'promise => ' . $item );
             } );
+        }
+
+        public static function start() {
+            $observable = Observable::start( function() {
+                return 27;
+            } );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function interval() {
+            $observable = Observable::interval( 500 )->take( 10 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function timer() {
+            $observable = Observable::timer( 3000 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function share() {
+            $observable = Observable::interval( 1000 )->take( 5 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->share();
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+            $published->subscribe( Observer::get( 3 ) );
+        }
+
+        public static function shareReplay() {
+            $observable = Observable::interval( 1000 )->take( 7 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->shareReplay( 6 );
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+            $published->subscribe( Observer::get( 3 ) );
+        }
+
+        public static function shareValue() {
+            $observable = Observable::interval( 1000 )->take( 10 )->do( function( $item ) {
+                Output::send( 'onNext => ' . $item );
+            } );
+
+            $published = $observable->shareValue( 20 );
+
+            $published->subscribe( Observer::get( 1 ) );
+            $published->subscribe( Observer::get( 2 ) );
+            $published->subscribe( Observer::get( 3 ) );
+        }
+
+        public static function subscribeOn() {
+            $loop = Factory::create();
+
+            $observable = Observable::create( function( ObserverInterface $observer ) use ( $loop ) {
+                $timer = $loop->addTimer( 2, function() use ( $observer ) {
+                    $observer->onNext( 1 );
+                    $observer->onNext( 2 );
+                    $observer->onNext( 3 );
+                    $observer->onCompleted();
+                } );
+
+                return new CallbackDisposable( function() use ( $loop, $timer ) {
+                    if ( $timer ) {
+                        $loop->cancelTimer( $timer );
+                    } else {
+                        $loop->stop();
+                    }
+                } );
+            } );
+
+            $observable->subscribeOn( new EventLoopScheduler( $loop ) )->subscribe( Observer::get() );
+
+            $loop->run();
+        }
+
+        public static function toArray() {
+            $observable = Observable::interval( 10 )->take( 5 )->toArray();
+
+            $observable->subscribe( function( $item ) {
+                Output::send( 'observer => ' . json_encode( $item ) );
+            } );
+        }
+
+        public static function withLatestFrom() {
+            $source1 = Observable::interval( 50 )->map( fn( $item ) => 'first ' . $item);
+            $source2 = Observable::interval( 100 )->map( fn( $item ) => 'second ' . $item);
+            $source3 = Observable::interval( 150 )->map( fn( $item ) => 'third ' . $item);
+
+            $observable = $source1->withLatestFrom( [ $source2, $source3 ] )->take( 10 );
+
+            $observable->subscribe( Observer::get() );
+        }
+
+        public static function zip() {
+            $source1 = Observable::range( 0, 5 );
+            $source2 = Observable::range( 6, 5 );
+            $source3 = Observable::range( 11, 5 );
+
+            $observable = $source1->zip( [ $source2, $source3 ], function( $s1, $s2, $s3 ) {
+                return $s1 . ' : ' . $s2 . ' : ' . $s3;
+            } )->take( 10 );
+
+            $observable->subscribe( Observer::get() );
         }
     }
