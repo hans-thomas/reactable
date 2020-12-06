@@ -2,13 +2,18 @@
 
     namespace App\Http\Controllers\Api;
 
+    use App\Exceptions\NoMethodSelectedException;
     use App\Http\Controllers\Controller;
     use Illuminate\Http\Request;
     use Illuminate\Support\Collection;
     use React\EventLoop\Factory;
+    use Reactable\Utilities\Output;
     use Rx\Scheduler;
 
     class ApiController extends Controller {
+        /**
+         * @throws \Exception
+         */
         public function run() {
             $execute = Collection::make();
             $classes = config( 'reactable.classes' );
@@ -26,16 +31,19 @@
             $loop = self::init();
             try {
                 if ( $execute->isEmpty() ) {
-                    throw new \Exception();
+                    throw new NoMethodSelectedException( 'please mark a method to run!' );
                 }
                 foreach ( $execute->reverse() as $item ) {
+                    if ( config( 'reactable.multiple' ) ) {
+                        Output::send( substr( $item[ 'method' ], 3, strlen( $item[ 'method' ] ) ) . '() started. -----------' );
+                    }
                     call_user_func_array( [ $item[ 'class' ], $item[ 'method' ] ], [] );
-                    if (! config( 'reactable.multiple' ) ) {
+                    if ( ! config( 'reactable.multiple' ) ) {
                         break;
                     }
                 }
-            } catch ( \Throwable $e ) {
-                throw new \Exception( 'please mark a method to run' );
+            } catch ( NoMethodSelectedException $e ) {
+                throw new \Exception( $e->getMessage() );
             }
             $loop->run();
         }

@@ -13,10 +13,11 @@
         |  ar run time
         |
         */
-        'classes' => [
+        'classes'  => [
             Loops::class,
             Observables::class,
             Operators::class,
+            \Reactable\Examples\Promises::class
         ],
         /*
         |--------------------------------------------------------------------------
@@ -26,5 +27,5 @@
         | by default it is false and if we have two marked methods,
         | that method will run witch is in lowest position.
         */
-        'multiple' => true
+        'multiple' => false
     ];
