@@ -13,10 +13,12 @@ in front-end we used Vue js with axios for sending request and getting server re
 
 ## How to run
 - first clone the repository and open a terminal in the root directory
-- second enter `docker-compose up -d --build` (enter `--build` just for the first time)
-- next `docker-compose app bash` and then `serice supervisor start` on every start up
-- also `cp .env.example .env` and `php artisan key:generate` just once
-- in the end run `php artisan migrate` and `chmod -R storage/ bootstrap/` just once too
+- second enter ```composer install```
+- third ```npm i```
+- then ```cp .env.example .env```
+- next ```php artisan key:generate```
+- and also ```php artisan websockets:serve```
+- in the end  ```php artisan serve``` for serving the project
 
 ## How to use
 - to executing a method just need to type `run` before the method's name. for example if we have `foo` method

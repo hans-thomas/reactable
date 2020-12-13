@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    working_dir: /var/www/reactable
+    ports:
+      - "6001:6001"
+    environment:
+      APP_ENV: development
+      APP_URL: http://localhost:8008
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: "reactable"
+      DB_USERNAME: "reactable_user"
+      DB_PASSWORD: "password"
+    volumes:
+      - ./core:/var/www/reactable
+      - ./supervisor/conf.d:/etc/supervisor/conf.d
+      - php:/usr/local/etc/php
+  web:
+    image: nginx
+    ports:
+      - "8008:80"
+    volumes:
+      - ./core:/var/www/reactable
+      - ./nginx/conf.d:/etc/nginx/conf.d
+  cache:
+    image: redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6479:6379"
+    volumes:
+      - cache:/data
+  db:
+    image: mariadb
+    ports:
+      - 3309:3306
+    environment:
+      MYSQL_DATABASE: "reactable"
+      MYSQL_USER: "reactable_user"
+      MYSQL_PASSWORD: "password"
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+    volumes:
+      - data:/var/lib/mysql
+
+volumes:
+  data:
+  cache:
+  php:

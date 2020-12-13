@@ -489,7 +489,7 @@
             $observable->subscribe( Observer::get() );
         }
 
-        public static function switchFirst() {
+        public static function runswitchFirst() {
             $observable = Observable::fromArray( [
                 Observable::interval( 100 )->startWith( 'a' )->take( 5 ),
                 Observable::interval( 200 )->startWith( 'b' )->take( 5 ),
